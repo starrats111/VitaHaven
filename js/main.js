@@ -117,8 +117,10 @@ function displayArticles(page = 1, articlesPerPage = 6) {
     const endIndex = startIndex + articlesPerPage;
     const articlesToShow = articles.slice(startIndex, endIndex);
     
-    articlesGrid.innerHTML = articlesToShow.map(article => `
-        <a href="article.html?id=${article.id}" class="article-card">
+    articlesGrid.innerHTML = articlesToShow.map(article => {
+        const slug = generateSlug(article.title);
+        return `
+        <a href="article.html?title=${encodeURIComponent(slug)}" class="article-card">
             <img src="${article.image}" alt="${article.title}" class="article-image">
             <div class="article-content">
                 <span class="article-category">${article.categoryName}</span>
@@ -132,7 +134,8 @@ function displayArticles(page = 1, articlesPerPage = 6) {
                 </div>
             </div>
         </a>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Setup pagination
@@ -197,14 +200,20 @@ function getCurrentPage() {
 // Display article detail
 function displayArticleDetail() {
     const params = new URLSearchParams(window.location.search);
-    const articleId = parseInt(params.get('id'));
+    const titleSlug = params.get('title');
     
-    if (!articleId) {
-        window.location.href = 'index.html';
-        return;
+    // Support both old id format and new title format for backward compatibility
+    let article;
+    if (titleSlug) {
+        // Find article by matching slug
+        article = articles.find(a => generateSlug(a.title) === titleSlug);
+    } else {
+        // Fallback to id for backward compatibility
+        const articleId = parseInt(params.get('id'));
+        if (articleId) {
+            article = articles.find(a => a.id === articleId);
+        }
     }
-    
-    const article = articles.find(a => a.id === articleId);
     
     if (!article) {
         window.location.href = 'index.html';
@@ -293,8 +302,10 @@ function displayCategoryArticles() {
                 </div>
             `;
         } else {
-            articlesGrid.innerHTML = filteredArticles.map(article => `
-                <a href="article.html?id=${article.id}" class="article-card">
+            articlesGrid.innerHTML = filteredArticles.map(article => {
+                const slug = generateSlug(article.title);
+                return `
+                <a href="article.html?title=${encodeURIComponent(slug)}" class="article-card">
                     <img src="${article.image}" alt="${article.title}" class="article-image">
                     <div class="article-content">
                         <span class="article-category">${article.categoryName}</span>
@@ -308,7 +319,8 @@ function displayCategoryArticles() {
                         </div>
                     </div>
                 </a>
-            `).join('');
+            `;
+            }).join('');
         }
     }
     
@@ -342,8 +354,10 @@ function performSearch(query) {
         return;
     }
     
-    searchResults.innerHTML = results.map(article => `
-        <div class="search-result-item" onclick="window.location.href='article.html?id=${article.id}'">
+    searchResults.innerHTML = results.map(article => {
+        const slug = generateSlug(article.title);
+        return `
+        <div class="search-result-item" onclick="window.location.href='article.html?title=${encodeURIComponent(slug)}'">
             <h4>${highlightText(article.title, query)}</h4>
             <p style="color: var(--color-text-light); font-size: 0.9rem; margin-top: 0.5rem;">
                 ${highlightText(article.excerpt.substring(0, 100) + '...', query)}
@@ -352,7 +366,8 @@ function performSearch(query) {
                 ${article.categoryName}
             </span>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Highlight search text
@@ -360,6 +375,16 @@ function highlightText(text, query) {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, 'gi');
     return text.replace(regex, '<mark>$1</mark>');
+}
+
+// Generate URL-friendly slug from title
+function generateSlug(title) {
+    return title
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
 // Format date
