@@ -11,12 +11,13 @@ function initializePage() {
     const path = window.location.pathname;
     const page = path.split('/').pop() || 'index.html';
     
-    if (page === 'index.html' || page === '') {
+    // Handle routes without .html extension (for GitHub Pages)
+    if (page === 'index.html' || page === '' || page === 'index') {
         displayArticles();
         setupPagination();
-    } else if (page === 'article.html') {
+    } else if (page === 'article.html' || page === 'article') {
         displayArticleDetail();
-    } else if (page === 'category.html') {
+    } else if (page === 'category.html' || page === 'category') {
         displayCategoryArticles();
     }
 }
