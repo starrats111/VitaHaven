@@ -126,3 +126,4 @@ Update the social media links in the footer section of each HTML file.
 
 This project is created for demonstration purposes.
 
+
